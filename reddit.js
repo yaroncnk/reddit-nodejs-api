@@ -195,6 +195,39 @@ module.exports = function RedditAPI(conn) {
           }
         }
       );
+    },
+        createSubReddit: function(sub, callback) {
+
+      conn.query(
+        'INSERT INTO subreddits (id, name, description, createdAt) VALUES (?, ?, ?, ?)', [sub.id, sub.name, sub.description, new Date()],
+        function(err, result) {
+          if (err) {
+             if (err.code === 'ER_DUP_ENTRY') {
+                  callback(new Error('A subreddit with this username already exists'));
+                }
+                else {
+                  callback(err);
+                }
+          }
+          else {
+            /*
+            Subreddit inserted successfully. Let's use the result.insertId to retrieve
+            the post and send it to the caller!
+            */
+            conn.query(
+              'SELECT id,name, description, createdAt, updatedAt FROM subreddits WHERE id = ?', [result.insertId],
+              function(err, result) {
+                if (err) {
+                  callback(err);
+                }
+                else {
+                  callback(null, result[0]);
+                }
+              }
+            );
+          }
+        }
+      );
     }
     
 

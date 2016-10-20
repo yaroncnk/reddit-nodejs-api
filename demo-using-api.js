@@ -41,7 +41,8 @@ var redditAPI = reddit(connection);
 //   }
 // });
 
-redditAPI.getSinglePost( 1, function (err,result){
+var testObj = {name: 'dogs' , description: 'crazy stuff'};
+redditAPI.createSubReddit(testObj, function (err,result){
   if (err) {
     console.log(err);
   }

@@ -21,7 +21,7 @@ CREATE TABLE `posts` (
   `updatedAt` DATETIME NOT NULL,
   PRIMARY KEY (`id`),
   KEY `userId` (`userId`), -- why did we add this here? ask me :)
-  CONSTRAINT `posts_ibfk_1` FOREIGN KEY (`userId`) REFERENCES `users` (`id`) ON DELETE SET NULL
+  CONSTRAINT `posts_ibfk_1` FOREIGN KEY (`userId`) REFERENCES `users` (`id`) ON DELETE SET NULL,
 );
 
 --This creates the subreddits table.
@@ -34,3 +34,8 @@ CREATE TABLE `subreddits` (
    PRIMARY KEY (`id`),
    UNIQUE KEY `name` (`name`)
 );
+
+ALTER TABLE posts ADD COLUMN subredditId INT;
+ALTER TABLE posts ADD FOREIGN KEY (subredditId) REFERENCES subreddits(id);
+
+
