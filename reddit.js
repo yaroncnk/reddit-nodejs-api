@@ -4,7 +4,7 @@ var HASH_ROUNDS = 10;
 module.exports = function RedditAPI(conn) {
   return {
     createUser: function(user, callback) {
-      
+
       // first we have to hash the password...
       bcrypt.hash(user.password, HASH_ROUNDS, function(err, hashedPassword) {
         if (err) {
@@ -48,7 +48,7 @@ module.exports = function RedditAPI(conn) {
                       3b. If the insert succeeds, re-fetch the user from the DB
                       4. If the re-fetch succeeds, return the object to the caller
                       */
-                        callback(null, result[0]);
+                      callback(null, result[0]);
                     }
                   }
                 );
@@ -93,22 +93,113 @@ module.exports = function RedditAPI(conn) {
       }
       var limit = options.numPerPage || 25; // if options.numPerPage is "falsy" then use 25
       var offset = (options.page || 0) * limit;
-      
+
       conn.query(`
-        SELECT id, title, url, userId, createdAt, updatedAt
-        FROM posts
-        ORDER BY createdAt DESC
-        LIMIT ? OFFSET ?`
-        , [limit, offset],
+        SELECT  p.id as postId, p.title as postTitle, p.url as postURL, p.createdAt as postCreatedAt , p.updatedAt as postUpdatedAt , p.userId as userId, u.id user_id , u.username as username, u.createdAt as userCreatedAt, u.updatedAt as userUpdatedAt
+        FROM posts p JOIN users u ON (u.id=p.userId)
+        ORDER BY p.createdAt DESC
+        LIMIT ? OFFSET ?`, [limit, offset],
         function(err, results) {
           if (err) {
             callback(err);
           }
           else {
-            callback(null, results);
+            var new_results = results.map(function(postsByUser) {
+              return {
+                id: postsByUser.post_id,
+                title: postsByUser.post_title,
+                url: postsByUser.postURL,
+                createdAt: postsByUser.postCreatedAt,
+                updatedAt: postsByUser.postUpdatedAt,
+                user: {
+                  id: postsByUser.user_id,
+                  username: postsByUser.username,
+                  userCreatedAt: postsByUser.userCreatedAt,
+                  userUptedAt: postsByUser.userUpdatedAt
+                }
+              };
+
+            })
+            callback(null, new_results);
+
+          }
+        }
+      );
+    },
+    getAllPostsForUser: function(userId, options, callback) {
+      // In case we are called without an options parameter, shift all the parameters manually
+      if (!callback) {
+        callback = options;
+        options = {};
+      }
+      var limit = options.numPerPage || 25; // if options.numPerPage is "falsy" then use 25
+      var offset = (options.page || 0) * limit;
+
+      conn.query(`
+        SELECT  p.id as postId, p.title as postTitle, p.url as postURL, p.createdAt as postCreatedAt , p.updatedAt as postUpdatedAt , p.userId as userId, u.id user_id , u.username as username, u.createdAt as userCreatedAt, u.updatedAt as userUpdatedAt
+        FROM posts p JOIN users u ON (u.id=p.userId)
+        WHERE u.id = ${userId} 
+        ORDER BY p.createdAt DESC
+        LIMIT ? OFFSET ?`, [limit, offset],
+        function(err, results) {
+          if (err) {
+            callback(err);
+          }
+          else {
+            var new_results = results.map(function(postsByUser) {
+              return {
+                id: postsByUser.user_id,
+                username: postsByUser.username,
+                userCreatedAt: postsByUser.userCreatedAt,
+                userUptedAt: postsByUser.userUpdatedAt,
+                posts: {
+                  id: postsByUser.post_id,
+                  title: postsByUser.post_title,
+                  url: postsByUser.postURL,
+                  createdAt: postsByUser.postCreatedAt,
+                  updatedAt: postsByUser.postUpdatedAt
+                }
+              };
+
+            })
+            callback(null, new_results);
+
+          }
+        }
+      );
+    },
+    
+        getSinglePost: function(postId, callback) {
+      // In case we are called without an options parameter, shift all the parameters manually
+      // if (!callback) {
+      //   callback = op;
+      //   options = {};
+      // }
+      // var limit = options.numPerPage || 25; // if options.numPerPage is "falsy" then use 25
+      // var offset = (options.page || 0) * limit;
+      
+      conn.query(`
+        SELECT  p.id as postId, p.title as postTitle, p.url as postURL, p.createdAt as postCreatedAt , p.updatedAt as postUpdatedAt , p.userId as userId
+        FROM posts p 
+        WHERE p.id = ${postId} `,
+        
+        function(err, results) {
+          if (err) {
+            callback(err);
+          }
+          else {
+          
+
+            callback(null, results[0]);
+
           }
         }
       );
     }
+    
+
+
+
+
   }
 }

@@ -23,3 +23,14 @@ CREATE TABLE `posts` (
   KEY `userId` (`userId`), -- why did we add this here? ask me :)
   CONSTRAINT `posts_ibfk_1` FOREIGN KEY (`userId`) REFERENCES `users` (`id`) ON DELETE SET NULL
 );
+
+--This creates the subreddits table.
+CREATE TABLE `subreddits` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` VARCHAR(30) DEFAULT NULL,
+  `description` VARCHAR(200) DEFAULT NULL,
+  `createdAt` DATETIME NOT NULL,
+  `updatedAt` DATETIME NOT NULL,
+   PRIMARY KEY (`id`),
+   UNIQUE KEY `name` (`name`)
+);
