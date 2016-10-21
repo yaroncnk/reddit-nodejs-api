@@ -87,6 +87,7 @@ module.exports = function RedditAPI(conn) {
     },
     getAllPosts: function(options, callback) {
       // In case we are called without an options parameter, shift all the parameters manually
+      //this function returns all posts, including information about the user (owner)
       if (!callback) {
         callback = options;
         options = {};
@@ -104,6 +105,7 @@ module.exports = function RedditAPI(conn) {
             callback(err);
           }
           else {
+            //here we create a new object that will store everything we need in the structure we want
             var new_results = results.map(function(postsByUser) {
               return {
                 id: postsByUser.postId,
@@ -133,6 +135,7 @@ module.exports = function RedditAPI(conn) {
     },
     getAllPostsForUser: function(userId, options, callback) {
       // In case we are called without an options parameter, shift all the parameters manually
+      // Thi function returns all the posts per user
       if (!callback) {
         callback = options;
         options = {};
@@ -173,27 +176,21 @@ module.exports = function RedditAPI(conn) {
         }
       );
     },
-    
-        getSinglePost: function(postId, callback) {
-      // In case we are called without an options parameter, shift all the parameters manually
-      // if (!callback) {
-      //   callback = op;
-      //   options = {};
-      // }
-      // var limit = options.numPerPage || 25; // if options.numPerPage is "falsy" then use 25
-      // var offset = (options.page || 0) * limit;
-      
+
+    getSinglePost: function(postId, callback) {
+      // This function takes a post ID and returns a single post
+
       conn.query(`
         SELECT  p.id as postId, p.title as postTitle, p.url as postURL, p.createdAt as postCreatedAt , p.updatedAt as postUpdatedAt , p.userId as userId
         FROM posts p 
         WHERE p.id = ${postId} `,
-        
+
         function(err, results) {
           if (err) {
             callback(err);
           }
           else {
-          
+
 
             callback(null, results[0]);
 
@@ -201,18 +198,19 @@ module.exports = function RedditAPI(conn) {
         }
       );
     },
-        createSubReddit: function(sub, callback) {
+    createSubReddit: function(sub, callback) {
+      //this function takes a subreddit and adds it to the subreddits table
 
       conn.query(
         'INSERT INTO subreddits (id, name, description, createdAt) VALUES (?, ?, ?, ?)', [sub.id, sub.name, sub.description || '', new Date()],
         function(err, result) {
           if (err) {
-             if (err.code === 'ER_DUP_ENTRY') {
-                  callback(new Error('A subreddit with this username already exists'));
-                }
-                else {
-                  callback(err);
-                }
+            if (err.code === 'ER_DUP_ENTRY') {
+              callback(new Error('A subreddit with this username already exists'));
+            }
+            else {
+              callback(err);
+            }
           }
           else {
             /*
@@ -234,37 +232,66 @@ module.exports = function RedditAPI(conn) {
         }
       );
     },
-            getAllSubreddits: function(callback) {
-      // In case we are called without an options parameter, shift all the parameters manually
-      // if (!callback) {
-      //   callback = op;
-      //   options = {};
-      // }
-      // var limit = options.numPerPage || 25; // if options.numPerPage is "falsy" then use 25
-      // var offset = (options.page || 0) * limit;
-      
+    getAllSubreddits: function(callback) {
+      // This function returns all subreddits
+
       conn.query(`
         SELECT  p.id as postId, p.title as postTitle, p.url as postURL, p.createdAt as postCreatedAt , p.updatedAt as postUpdatedAt , p.userId as userId
         FROM posts p 
         ORDER BY p.createdAt DESC `,
-        
+
         function(err, results) {
           if (err) {
             callback(err);
           }
           else {
-          
+
 
             callback(null, results);
 
           }
         }
       );
+    },
+    createOrUpdateVote: function(vote, callback) {
+      //this function taks an object with votes and adds it to the votes table
+      //the vote can be either added or updated
+      if  (vote.vote != 1 || vote.vote != 0 || vote.vote != -1) {
+      conn.query(
+        'INSERT INTO votes (userId, postId, vote, createdAt) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE `vote`= ?', 
+        [vote.userId, vote.postId, vote.vote, new Date(), vote.vote],
+        function(err, result) {
+          if (err) {
+            callback(err);
+          }
+          else {
+            /*
+            Vote inserted successfully. Let's use the result.insertId to retrieve
+            the post and send it to the caller!
+            */
+
+         
+              conn.query(
+                'SELECT userId,postId, vote, createdAt, updatedAt FROM votes ', [result.insertId],
+                function(err, result) {
+                  if (err) {
+                    callback(err);
+                  }
+                  else {
+                    callback(null, result);
+                  }
+                
+                }
+                );
+          
+        
+        }
+      }
+      );
+    } else {
+      console.log('invalid value');
     }
-    
-
-
-
 
   }
+}
 }
