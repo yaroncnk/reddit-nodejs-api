@@ -228,6 +228,33 @@ module.exports = function RedditAPI(conn) {
           }
         }
       );
+    },
+            getAllSubreddits: function(callback) {
+      // In case we are called without an options parameter, shift all the parameters manually
+      // if (!callback) {
+      //   callback = op;
+      //   options = {};
+      // }
+      // var limit = options.numPerPage || 25; // if options.numPerPage is "falsy" then use 25
+      // var offset = (options.page || 0) * limit;
+      
+      conn.query(`
+        SELECT  p.id as postId, p.title as postTitle, p.url as postURL, p.createdAt as postCreatedAt , p.updatedAt as postUpdatedAt , p.userId as userId
+        FROM posts p 
+        ORDER BY p.createdAt DESC `,
+        
+        function(err, results) {
+          if (err) {
+            callback(err);
+          }
+          else {
+          
+
+            callback(null, results);
+
+          }
+        }
+      );
     }
     
 
