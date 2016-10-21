@@ -38,4 +38,16 @@ CREATE TABLE `subreddits` (
 ALTER TABLE posts ADD COLUMN subredditId INT;
 ALTER TABLE posts ADD FOREIGN KEY (subredditId) REFERENCES subreddits(id);
 
+--This creates the votes table
+CREATE TABLE `votes` (
+  `userId` INT(11) NOT NULL,
+  `postId` INT(11) NOT NULL,
+  `vote` TINYINT NOT NULL,
+  `createdAt` DATETIME NOT NULL,
+  `updatedAt` DATETIME NOT NULL,
+  PRIMARY KEY (`userId`, `postId`),
+  FOREIGN KEY (`userId`) REFERENCES `users` (`id`) ,
+  FOREIGN KEY (`postId`) REFERENCES `posts` (`id`) 
+  
+);
 

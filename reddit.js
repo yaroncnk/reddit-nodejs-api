@@ -58,9 +58,9 @@ module.exports = function RedditAPI(conn) {
         }
       });
     },
-    createPost: function(post, callback) {
+    createPost: function(post, subredditId, callback) {
       conn.query(
-        'INSERT INTO posts (userId, title, url, createdAt) VALUES (?, ?, ?, ?)', [post.userId, post.title, post.url, new Date()],
+        'INSERT INTO posts (userId, title, url, createdAt, subredditId) VALUES (?, ?, ?, ?, ?)', [post.userId, post.title, post.url, new Date(), subredditId],
         function(err, result) {
           if (err) {
             callback(err);
@@ -71,7 +71,7 @@ module.exports = function RedditAPI(conn) {
             the post and send it to the caller!
             */
             conn.query(
-              'SELECT id,title,url,userId, createdAt, updatedAt FROM posts WHERE id = ?', [result.insertId],
+              'SELECT id,title,url,userId, createdAt, updatedAt, subredditId FROM posts WHERE id = ?', [result.insertId],
               function(err, result) {
                 if (err) {
                   callback(err);
@@ -95,8 +95,8 @@ module.exports = function RedditAPI(conn) {
       var offset = (options.page || 0) * limit;
 
       conn.query(`
-        SELECT  p.id as postId, p.title as postTitle, p.url as postURL, p.createdAt as postCreatedAt , p.updatedAt as postUpdatedAt , p.userId as userId, u.id user_id , u.username as username, u.createdAt as userCreatedAt, u.updatedAt as userUpdatedAt
-        FROM posts p JOIN users u ON (u.id=p.userId)
+        SELECT  p.id as postId, p.title as postTitle, p.url as postURL, p.createdAt as postCreatedAt , p.updatedAt as postUpdatedAt , p.userId as userId, u.id user_id , u.username as username, u.createdAt as userCreatedAt, u.updatedAt as userUpdatedAt, p.subredditId as subreddit, s.name as redditName, s.description as redditDescription
+        FROM posts p LEFT JOIN users u ON (u.id=p.userId) LEFT JOIN subreddits s ON (p.subredditId = s.id)
         ORDER BY p.createdAt DESC
         LIMIT ? OFFSET ?`, [limit, offset],
         function(err, results) {
@@ -106,8 +106,8 @@ module.exports = function RedditAPI(conn) {
           else {
             var new_results = results.map(function(postsByUser) {
               return {
-                id: postsByUser.post_id,
-                title: postsByUser.post_title,
+                id: postsByUser.postId,
+                title: postsByUser.postTitle,
                 url: postsByUser.postURL,
                 createdAt: postsByUser.postCreatedAt,
                 updatedAt: postsByUser.postUpdatedAt,
@@ -116,6 +116,11 @@ module.exports = function RedditAPI(conn) {
                   username: postsByUser.username,
                   userCreatedAt: postsByUser.userCreatedAt,
                   userUptedAt: postsByUser.userUpdatedAt
+                },
+                subreddit: {
+                  id: postsByUser.subreddit,
+                  name: postsByUser.redditName,
+                  description: postsByUser.redditDescription
                 }
               };
 
@@ -199,7 +204,7 @@ module.exports = function RedditAPI(conn) {
         createSubReddit: function(sub, callback) {
 
       conn.query(
-        'INSERT INTO subreddits (id, name, description, createdAt) VALUES (?, ?, ?, ?)', [sub.id, sub.name, sub.description, new Date()],
+        'INSERT INTO subreddits (id, name, description, createdAt) VALUES (?, ?, ?, ?)', [sub.id, sub.name, sub.description || '', new Date()],
         function(err, result) {
           if (err) {
              if (err.code === 'ER_DUP_ENTRY') {
