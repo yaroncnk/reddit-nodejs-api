@@ -105,10 +105,7 @@ myWebServer.get('/posts', function(request, response) {
 </div>`
 
 
-                //   `<h1>title:` + details.title + `</h1>
-                //   <p>url: ` + details.url + `</p>
-                //   <p>user: ` + details.user.username + `</p>`
-
+                
             })
             response.send(content);
         }
@@ -116,6 +113,25 @@ myWebServer.get('/posts', function(request, response) {
 
     })
 });
+
+//ex. 5 - creating a form 
+
+myWebServer.get('/createContent', function(request, response) {
+    console.log(request.query);
+    response.send(`
+    <form action="/createContent" method="POST"> <!-- what is this method="POST" thing? you should know, or ask me :) -->
+    <div>
+        <input type="text" name="url" placeholder="Enter a URL to content">
+    </div>
+    <div>
+        <input type="text" name="title" placeholder="Enter the title of your content">
+    </div>
+        <button type="submit">Create!</button>
+        </form>
+    
+    `);
+});
+
 
 // This function will make the server listen 24/7 for incoming requests. Web servers never sleep!
 myWebServer.listen(process.env.PORT);
