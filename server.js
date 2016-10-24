@@ -33,8 +33,39 @@ myWebServer.get('/hello/:any_key_name', function(request, response) {
     }
 });
 
-//ex. 4 - this function performs numerical operations on two numbers
+//ex. 3 - this function performs numerical operations on two numbers
+myWebServer.get('/calculator/:operation', function(request, response) {
+    var calculationProcess = {
+            operator: request.params.operation,
+            firstOperand: request.query.num1,
+            secondOperand: request.query.num2,
+    
+        };
+    if (request.params.operation === 'add') {
+        
+        
+        calculationProcess.solution = parseInt(request.query.num1) + parseInt(request.query.num2);
+        
+    }
+    else if (request.params.operation === 'sub') {
+        calculationProcess.solution = parseInt(request.query.num1) - parseInt(request.query.num2);
+    }
+    else if (request.params.operation === 'div') {
+        calculationProcess.solution = parseInt(request.query.num1) / parseInt(request.query.num2);
 
+    }
+    else if (request.params.operation === 'mult') {
+        calculationProcess.solution = parseInt(request.query.num1) * parseInt(request.query.num2);
+    }
+    else {
+        response.status(404).send(' Not found');
+
+    }
+
+
+    response.send(calculationProcess);
+
+});
 
 // This function will make the server listen 24/7 for incoming requests. Web servers never sleep!
 myWebServer.listen(process.env.PORT);
