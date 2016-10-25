@@ -1,6 +1,13 @@
 var express = require('express');
 // load the mysql library
 var mysql = require('mysql');
+var bodyParser = require('body-parser');
+var myWebServer = express();
+myWebServer.use(bodyParser.urlencoded({
+    extended: false
+}));
+myWebServer.set('view engine', 'pug');
+
 
 // create a connection to our Cloud9 server
 var connection = mysql.createConnection({
@@ -14,7 +21,7 @@ var connection = mysql.createConnection({
 var reddit = require('./reddit');
 var redditAPI = reddit(connection);
 
-var myWebServer = express();
+
 
 // This function will be called once for every request
 // Because it doesn't want to send a response, it calls next()
@@ -24,6 +31,24 @@ myWebServer.use(function(request, response, next) {
 
     next();
 });
+
+function todayDate() {
+    var today = new Date();
+    var dd = today.getDate();
+    var mm = today.getMonth() + 1; //January is 0!
+    var yyyy = today.getFullYear();
+
+    if (dd < 10) {
+        dd = '0' + dd
+    }
+
+    if (mm < 10) {
+        mm = '0' + mm
+    }
+
+    today = mm + '/' + dd + '/' + yyyy;
+    return today;
+}
 
 // This function will only be called if the request method is GET and the url path is /hello
 // myWebServer.get('/hello', function(request, response) {
@@ -72,7 +97,7 @@ myWebServer.get('/calculator/:operation', function(request, response) {
         calculationProcess.solution = parseInt(request.query.num1) * parseInt(request.query.num2);
     }
     else {
-        response.status(404).send(' Not found');
+        response.status(400).send(' Not found');
 
     }
 
@@ -84,54 +109,45 @@ myWebServer.get('/calculator/:operation', function(request, response) {
 // ex. 4 - getAllPosts
 myWebServer.get('/posts', function(request, response) {
 
-    redditAPI.getAllPosts(5, function(err, posts) {
+    redditAPI.getAllPosts(5, function(err, content) {
         if (err) {
             return err;
         }
         else {
-            var content = `<div id="contents">
-                            <h1>List of contents - five latest posts</h1>`;
-            posts.forEach(function(details) {
-                content +=
-                         `
-                             <ul class="contents-list">
-                             <li class="content-item">
-                                 <h2 class="content-item__title">
-                                  <a href=` + details.url + `> ` + details.title  +`</a>
-                                 </h2>
-                            <p>Created by ` + details.user.username + `</p>
-                 </li>
-  </ul>
-</div>`
+            response.render('post-list', {content: content});
 
-
-                
-            })
-            response.send(content);
         }
-
-
     })
 });
 
-//ex. 5 - creating a form 
+//ex. 5 + 6 - creating a form 
 
-myWebServer.get('/createContent', function(request, response) {
-    console.log(request.query);
-    response.send(`
-    <form action="/createContent" method="POST"> <!-- what is this method="POST" thing? you should know, or ask me :) -->
-    <div>
-        <input type="text" name="url" placeholder="Enter a URL to content">
-    </div>
-    <div>
-        <input type="text" name="title" placeholder="Enter the title of your content">
-    </div>
-        <button type="submit">Create!</button>
-        </form>
-    
-    `);
+myWebServer.get('/createContent', function(req, res) {
+    res.render('create-content');
+
+
 });
 
+//ex. 6 - posting information from the post
 
-// This function will make the server listen 24/7 for incoming requests. Web servers never sleep!
-myWebServer.listen(process.env.PORT);
+myWebServer.post('/createContent', function(req, res, next) {
+
+            var title = req.body.title ;
+            var url = req.body.url ;
+            var newPost = {userId:1, title: title, url: url, createdAt: todayDate()};
+            redditAPI.createPost( newPost, 4, function(err, object){
+                if (err) {
+                    console.log(err);
+                }
+                else {
+                console.log(object);
+                }
+            });
+            next();
+                },
+                function(req, res, next) {
+                    res.redirect('/posts');
+                });
+
+        // This function will make the server listen 24/7 for incoming requests. Web servers never sleep!
+        myWebServer.listen(process.env.PORT);

@@ -1,0 +1,9 @@
+
+div(id="contents")
+  h1 The five latest posts
+  ul(class="contents-list")
+     each val in content
+      li
+        h2(class="content-item__title")
+        a(href= val.url)= val.title
+        p= "created by " + val.user.username + " on " + val.createdAt
