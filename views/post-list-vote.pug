@@ -1,0 +1,27 @@
+
+div(id="contents")
+  h1 Welcome to keepUposted!
+  img(id="start" src="http://justcreative.com/wp-content/uploads/2011/10/shutterstock_79962688.jpg")
+  h3 Because YOU need to keep yourself posted about something...
+  H1 Keep us posted :)
+  H2 Create a new post
+  h2 All posts
+  ul(class="contents-list")
+    each val in content
+      li
+        h2(class="content-item__title")
+        a(href= val.url)= val.title
+        p= "created by " + val.user.username + " on " + val.createdAt
+          form(action='/vote', method='post')
+          input(type='hidden', name='vote', value='1')
+          |  
+          input(type='hidden', name='postId', value='XXXX')
+          |  
+          button(type='submit') upvote this
+          form(action='/vote', method='post')
+          input(type='hidden', name='vote', value='-1')
+          |  
+          input(type='hidden', name='postId', value='XXXX')
+          |  
+          button(type='submit') downvote this
+        

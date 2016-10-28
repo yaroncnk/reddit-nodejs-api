@@ -1,0 +1,20 @@
+doctype html
+html
+  head
+    meta(charset="utf-8")
+    link(rel='stylesheet', href='mystyle.css', type='text/css' )
+    block title
+      title keepUposted
+  body
+    ul
+      li
+        a(href='/sign-up') sign-up
+      li
+        a(href='/login') login
+      li
+        a(href='/new') new stuff
+      li
+        a(href='/createContent') post new things
+
+    block content
+    include post-list-vote.pug
